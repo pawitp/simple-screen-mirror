@@ -28,7 +28,8 @@ Status: <span id="status">disconnected</span>
       });
       const responseJson = await response.json();
 
-      await pc.setRemoteDescription(await responseJson.answer);
+      // TODO: Codec choice (H264 hardware encoder have lower latency)
+      await pc.setRemoteDescription(responseJson.answer);
       for (const candidate of responseJson.iceCandidates) {
         await pc.addIceCandidate(candidate);
       }
@@ -36,9 +37,10 @@ Status: <span id="status">disconnected</span>
   }
 
   async function startShare() {
+    // TODO: Resolution choice
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: {
-        frameRate: 1
+        height: 1080
       }
     });
 
