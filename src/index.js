@@ -1,5 +1,8 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
+
+// Remove menu
+Menu.setApplicationMenu(null);
 
 const createWindow = () => {
   // Create the browser window.
