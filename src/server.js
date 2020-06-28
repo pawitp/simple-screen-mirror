@@ -1,7 +1,9 @@
 const {BrowserWindow, ipcMain} = require('electron');
-const express = require('express')
+const express = require('express');
 const bodyParser = require('body-parser');
-const path = require('path')
+const path = require('path');
+const https = require('https');
+const fs = require('fs');
 const app = express()
 const port = 3000
 
@@ -30,5 +32,9 @@ app.post('/startShare', async (req, res) => {
   res.json(await replyPromise);
 })
 
-// TODO: Add HTTPS
-app.listen(port, () => console.log(`Simple screen share listening at http://localhost:${port}`))
+// TODO: Generate certificates on-the-fly
+const privateKey  = fs.readFileSync('server.key', 'utf8');
+const certificate = fs.readFileSync('server.crt', 'utf8');
+const credentials = {key: privateKey, cert: certificate};
+const httpsServer = https.createServer(credentials, app);
+httpsServer.listen(port, () => console.log(`Simple screen share listening at https://localhost:${port}`))
