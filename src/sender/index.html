@@ -8,7 +8,7 @@
 <a href="#" id="startShare">Start sharing</a>
 
 <br>
-Status: <span id="status">disconnected</span>
+Status: <span id="status">Disconnected</span>
 
 <script>
   let pc;
@@ -19,6 +19,7 @@ Status: <span id="status">disconnected</span>
     if (event.candidate) {
       iceCandidates.push(event.candidate);
     } else {
+      document.getElementById('status').innerText = 'Signaling...';
       const response = await fetch('/startShare', {
         method: "POST",
         headers: {
@@ -36,20 +37,53 @@ Status: <span id="status">disconnected</span>
     }
   }
 
+  function onConnectionStateChange() {
+    if (pc.connectionState === "connected") {
+      document.getElementById('status').innerText = 'Connected';
+    } else if (pc.connectionState === "disconnected" || pc.connectionState === "closed" || pc.connectionState === "failed") {
+      stopShare();
+    }
+  }
+
   async function startShare() {
+    // If share is already running, stop it
+    if (pc) {
+      return stopShare();
+    }
+
+    document.getElementById('status').innerText = 'Initializing...';
+
     // TODO: Resolution choice
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        height: 1080
-      }
-    });
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          height: 1080
+        }
+      });
+    } catch (e) {
+      // Exception is thrown if user clicked cancel
+      console.log(e);
+      stopShare();
+    }
+    const videoTrack = stream.getVideoTracks()[0];
+    videoTrack.onended = stopShare;
 
     pc = new RTCPeerConnection();
     pc.onicecandidate = onIceCandidate;
-    pc.addTrack(stream.getVideoTracks()[0], stream)
+    pc.onconnectionstatechange = onConnectionStateChange;
+    pc.addTrack(videoTrack, stream)
 
     offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
+  }
+
+  function stopShare() {
+    if (pc) {
+      pc.close();
+      pc = undefined;
+    }
+    document.getElementById('status').innerText = 'Disconnected';
   }
 
   document.getElementById('startShare').onclick = startShare;
