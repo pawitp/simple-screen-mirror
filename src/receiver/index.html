@@ -2,10 +2,31 @@
 <html>
 <head>
     <title>Screen Receiver</title>
+    <style>
+        #media {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            cursor: none;
+        }
+
+        #status {
+            position: absolute;
+            background: silver;
+            font-size: 100px;
+            bottom: 0;
+            right: 0;
+            z-index: 1;
+        }
+    </style>
 </head>
 <body>
 
-Status: <span id="status">disconnected</span>
+<span id="status">Disconnected</span>
 
 <video id="media" autoplay></video>
 
@@ -28,11 +49,23 @@ Status: <span id="status">disconnected</span>
     document.getElementById('media').srcObject = event.streams[0];
   }
 
+  function onConnectionStateChange() {
+    if (pc.connectionState === "connected") {
+      document.getElementById('status').innerText = 'Connected';
+      setInterval(() => {
+        document.getElementById('status').innerText = '';
+      }, 2000);
+    } else if (pc.connectionState === "disconnected" || pc.connectionState === "closed" || pc.connectionState === "failed") {
+      window.close()
+    }
+  }
+
   ipcRenderer.once('init', async (event, pcParams) => {
     document.getElementById('status').innerText = 'Connecting...';
     pc = new RTCPeerConnection();
     pc.onicecandidate = onIceCandidate;
     pc.ontrack = onTrack;
+    pc.onconnectionstatechange = onConnectionStateChange;
 
     await pc.setRemoteDescription(pcParams.offer);
     for (const candidate of pcParams.iceCandidates) {

@@ -13,14 +13,13 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'sender/index.html'
 app.post('/startShare', async (req, res) => {
   // Create receiver window
   const receiverWin = new BrowserWindow({
-    width: 800,
-    height: 600,
+    fullscreen: true,
     webPreferences: {
       nodeIntegration: true
     }
   });
   await receiverWin.loadFile(path.join(__dirname, 'receiver/index.html'));
-  receiverWin.webContents.openDevTools();
+  // receiverWin.webContents.openDevTools();
   receiverWin.webContents.send('init', req.body);
 
   const replyPromise = new Promise((resolve, reject) => {
