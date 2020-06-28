@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Screen Receiver</title>
+</head>
+<body>
+
+Status: <span id="status">disconnected</span>
+
+<video id="media" autoplay></video>
+
+<script>
+  const {ipcRenderer} = require('electron');
+  let pc;
+  let answer;
+  let iceCandidates = [];
+
+  async function onIceCandidate(event) {
+    if (event.candidate) {
+      iceCandidates.push(event.candidate);
+    } else {
+      // stringify/parse is to avoid object cloning issue
+      ipcRenderer.send('initReply', JSON.parse(JSON.stringify({answer, iceCandidates})));
+    }
+  }
+
+  async function onTrack(event) {
+    document.getElementById('media').srcObject = event.streams[0];
+  }
+
+  ipcRenderer.once('init', async (event, pcParams) => {
+    document.getElementById('status').innerText = 'Connecting...';
+    pc = new RTCPeerConnection();
+    pc.onicecandidate = onIceCandidate;
+    pc.ontrack = onTrack;
+
+    await pc.setRemoteDescription(pcParams.offer);
+    for (const candidate of pcParams.iceCandidates) {
+      await pc.addIceCandidate(candidate);
+    }
+    answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+  });
+</script>
+
+</body>
+</html>

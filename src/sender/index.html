@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Screen Sender</title>
+</head>
+<body>
+
+<a href="#" id="startShare">Start sharing</a>
+
+<br>
+Status: <span id="status">disconnected</span>
+
+<script>
+  let pc;
+  let offer;
+  let iceCandidates = [];
+
+  async function onIceCandidate(event) {
+    if (event.candidate) {
+      iceCandidates.push(event.candidate);
+    } else {
+      const response = await fetch('/startShare', {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({offer, iceCandidates})
+      });
+      const responseJson = await response.json();
+
+      await pc.setRemoteDescription(await responseJson.answer);
+      for (const candidate of responseJson.iceCandidates) {
+        await pc.addIceCandidate(candidate);
+      }
+    }
+  }
+
+  async function startShare() {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        frameRate: 1
+      }
+    });
+
+    pc = new RTCPeerConnection();
+    pc.onicecandidate = onIceCandidate;
+    pc.addTrack(stream.getVideoTracks()[0], stream)
+
+    offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+  }
+
+  document.getElementById('startShare').onclick = startShare;
+</script>
+
+</body>
+</html>
