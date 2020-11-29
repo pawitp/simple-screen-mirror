@@ -32,8 +32,8 @@ app.post('/startShare', async (req, res) => {
 })
 
 // TODO: Generate certificates on-the-fly
-const privateKey  = fs.readFileSync('server.key', 'utf8');
-const certificate = fs.readFileSync('server.crt', 'utf8');
+const privateKey  = fs.readFileSync(path.join(__dirname, 'server.key'), 'utf8');
+const certificate = fs.readFileSync(path.join(__dirname, 'server.crt'), 'utf8');
 const credentials = {key: privateKey, cert: certificate};
 const httpsServer = https.createServer(credentials, app);
 httpsServer.listen(port, () => console.log(`Simple screen share listening at https://localhost:${port}`))

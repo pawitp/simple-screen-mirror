@@ -13,6 +13,7 @@ Status: <span id="status">Disconnected</span>
 <script>
   let pc;
   let offer;
+  let stream;
   let iceCandidates = [];
 
   async function onIceCandidate(event) {
@@ -54,7 +55,6 @@ Status: <span id="status">Disconnected</span>
     document.getElementById('status').innerText = 'Initializing...';
 
     // TODO: Resolution choice
-    let stream;
     try {
       stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
@@ -64,7 +64,7 @@ Status: <span id="status">Disconnected</span>
     } catch (e) {
       // Exception is thrown if user clicked cancel
       console.log(e);
-      stopShare();
+      return stopShare();
     }
     const videoTrack = stream.getVideoTracks()[0];
     videoTrack.onended = stopShare;
@@ -82,6 +82,12 @@ Status: <span id="status">Disconnected</span>
     if (pc) {
       pc.close();
       pc = undefined;
+    }
+    if (stream) {
+      for (const track of stream.getTracks()) {
+        track.stop();
+      }
+      stream = undefined;
     }
     document.getElementById('status').innerText = 'Disconnected';
   }
